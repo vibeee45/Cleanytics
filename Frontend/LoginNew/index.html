@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cleanytics - Automatic Dataset Cleaner</title>
+
+  <!-- Tailwind CSS CDN (no local Tailwind build is configured in package.json) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    html, body, #root { height: 100%; }
+    body { margin: 0; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+
+  <!-- The React app (App.jsx) mounts here via index.jsx -->
+  <div id="root"></div>
+
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+import { Globe, Github, Mail, ShieldCheck, Users } from 'lucide-react';
+
+const head = { name: 'Vansh Bhardwaj', email: 'bhardwajvansh2501@gmail.com', linkedin: 'https://www.linkedin.com/in/vansh-bhardwaj-526731325?utm_source=share_via&utm_content=profile&utm_medium=member_android' };
+const members = [
+  { name: 'Janmejay Kumar Singh', email: 'janmejaykumarsinghsharp@gmail.com', linkedin: 'https://www.linkedin.com/in/janmejay-kumar-singh-ab50b1272?utm_source=share_via&utm_content=profile&utm_medium=member_android' },
+  { name: 'Lucky Chaurasiya', email: 'luckychaurasiayji@gmail.com', linkedin: 'https://www.linkedin.com/in/lucky-chaurasiya-97946336b?utm_source=share_via&utm_content=profile&utm_medium=member_android' },
+  { name: 'Nidhi Rajput', email: 'nidhirajput51348@gmail.com', linkedin: 'https://www.linkedin.com/in/nidhi-rajput-ba66583b2?utm_source=share_via&utm_content=profile&utm_medium=member_android' },
+];
+
+export default function HelpSupport() {
+  return <div className="help-support-page max-w-5xl mx-auto space-y-6 relative z-10">
+    <div><h2 className="text-2xl font-bold">Help &amp; Support</h2><p className="text-sm text-[rgb(var(--text-s))] mt-1">Get in touch with the Cleanytics team.</p></div>
+    <section className="help-contact-card p-6 rounded-2xl border border-[rgb(var(--border))] bg-[rgba(var(--bg-surface),.9)]"><div className="flex items-center gap-3 mb-5"><div className="p-3 rounded-xl bg-[rgba(var(--c-main-rgb),.12)] text-[var(--c-main)]"><Globe size={22} /></div><div><h3 className="text-lg font-semibold">Cleanytics</h3><p className="text-xs text-[rgb(var(--text-s))]">Automatic Dataset Cleaner</p></div></div><a href="mailto:cleanytics45@gmail.com" className="help-email-row"><Mail size={17} /><span><small>Website / general contact</small><strong>cleanytics45@gmail.com</strong></span></a><a href="https://github.com/chaurasiyalucky241-cmd/LoginNew" target="_blank" rel="noreferrer" className="github-link"><Github size={17} /> View project updates and details on GitHub</a></section>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5"><section className="help-contact-card p-6 rounded-2xl border border-[rgb(var(--border))] bg-[rgba(var(--bg-surface),.9)]"><div className="flex items-center gap-3 mb-4"><ShieldCheck className="text-[var(--c-main)]" size={21} /><h3 className="font-semibold">Head</h3></div><p className="text-sm font-semibold mb-2">{head.name}</p><a href={`mailto:${head.email}`} className="help-email-row"><Mail size={17} /><span><small>Project head</small><strong>{head.email}</strong></span></a><a href={head.linkedin} target="_blank" rel="noreferrer" className="linkedin-link">in&nbsp; View LinkedIn profile</a></section><section className="help-contact-card p-6 rounded-2xl border border-[rgb(var(--border))] bg-[rgba(var(--bg-surface),.9)]"><div className="flex items-center gap-3 mb-4"><Users className="text-[var(--c-main)]" size={21} /><h3 className="font-semibold">Team Members</h3></div><div className="space-y-4">{members.map(member => <div key={member.email}><a href={`mailto:${member.email}`} className="help-member"><Mail size={15} />{member.name} · {member.email}</a><a href={member.linkedin} target="_blank" rel="noreferrer" className="linkedin-link ml-6">in&nbsp; View LinkedIn profile</a></div>)}</div></section></div>
+  </div>;
+}
