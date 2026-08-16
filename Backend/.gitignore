@@ -1,8 +1,17 @@
 .env
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.venv/
-venv/
 .env.*
 !.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Testing
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Temporary Code Runner files
+tempCodeRunnerFile.py
