@@ -8,3 +8,17 @@ alembic
 python-multipart
 redis
 celery
+passlib[bcrypt]
+bcrypt
+PyJWT
+minio
+pandas
+openpyxl
+httpx
+pytest
+pytest-asyncio
+email-validator
+aiosqlite
+
+
+
