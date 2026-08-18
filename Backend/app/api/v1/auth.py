@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.schemas.user import (
     ForgotPasswordRequest,
     MessageResponse,
@@ -21,9 +23,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
 )
-async def register(user_in: UserCreate):
-    user_dict = auth_service.register(user_in)
-    return user_dict
+async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+    user = await auth_service.register(db, user_in)
+    return user
 
 
 @router.post(
@@ -31,8 +33,8 @@ async def register(user_in: UserCreate):
     response_model=TokenResponse,
     summary="Login to obtain access and refresh tokens",
 )
-async def login(credentials: UserLogin):
-    return auth_service.login(credentials)
+async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+    return await auth_service.login(db, credentials)
 
 
 @router.post(
@@ -40,8 +42,8 @@ async def login(credentials: UserLogin):
     response_model=TokenResponse,
     summary="Refresh access token using a refresh token",
 )
-async def refresh_token(req: TokenRefreshRequest):
-    return auth_service.refresh(req.refresh_token)
+async def refresh_token(req: TokenRefreshRequest, db: AsyncSession = Depends(get_db)):
+    return await auth_service.refresh(db, req.refresh_token)
 
 
 @router.post(
@@ -49,8 +51,8 @@ async def refresh_token(req: TokenRefreshRequest):
     response_model=MessageResponse,
     summary="Request a password reset token",
 )
-async def forgot_password(req: ForgotPasswordRequest):
-    await auth_service.forgot_password(req)
+async def forgot_password(req: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+    await auth_service.forgot_password(db, req)
     return MessageResponse(
         message="If an account exists with that email, a password reset link/token has been generated."
     )
@@ -61,6 +63,6 @@ async def forgot_password(req: ForgotPasswordRequest):
     response_model=MessageResponse,
     summary="Reset password using a valid reset token",
 )
-async def reset_password(req: ResetPasswordRequest):
-    auth_service.reset_password(req)
+async def reset_password(req: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    await auth_service.reset_password(db, req)
     return MessageResponse(message="Password reset successfully.")

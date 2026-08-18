@@ -1,15 +1,21 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.core.security import decode_token, oauth2_scheme
+from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
 from app.services.auth_service import auth_service
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-async def get_current_user(token: Optional[str] = Depends(oauth2_scheme)) -> dict:
+async def get_current_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User:
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -28,7 +34,7 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_scheme)) -> dic
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
         )
-    user = auth_service.get_user_by_id(user_id)
+    user = await auth_service.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -42,7 +48,7 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_scheme)) -> dic
     response_model=UserResponse,
     summary="Get current logged in user profile",
 )
-async def get_me(current_user: dict = Depends(get_current_user)):
+async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
@@ -53,7 +59,8 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 )
 async def update_me(
     user_update: UserUpdate,
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    updated_user = auth_service.update_user(current_user["id"], user_update)
+    updated_user = await auth_service.update_user(db, current_user.id, user_update)
     return updated_user
