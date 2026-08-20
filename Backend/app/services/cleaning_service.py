@@ -396,3 +396,96 @@ class CleaningService:
             )
 
         return cleaned_df, type_report
+    @staticmethod
+    def normalize_column_names(
+        df: pd.DataFrame,
+    ) -> tuple[pd.DataFrame, list[dict]]:
+        """
+        Normalize DataFrame column names.
+
+        Rules:
+        - Convert to lowercase
+        - Remove leading/trailing whitespace
+        - Replace spaces with underscores
+        - Replace hyphens and dots with underscores
+        - Remove special characters
+        - Remove duplicate underscores
+        - Handle empty column names
+        - Make duplicate normalized names unique
+
+        Returns:
+            DataFrame with normalized column names
+            Column normalization report
+        """
+
+        cleaned_df = df.copy()
+
+        original_columns = list(cleaned_df.columns)
+        normalized_columns = []
+        column_report = []
+
+        used_names = set()
+
+        for index, column in enumerate(original_columns):
+
+            original_name = str(column).strip()
+
+            # Convert to lowercase
+            normalized_name = original_name.lower()
+
+            # Replace common separators with underscore
+            normalized_name = (
+                normalized_name
+                .replace(" ", "_")
+                .replace("-", "_")
+                .replace(".", "_")
+            )
+
+            # Keep only letters, numbers and underscores
+            normalized_name = "".join(
+                char
+                for char in normalized_name
+                if char.isalnum() or char == "_"
+            )
+
+            # Remove repeated underscores
+            while "__" in normalized_name:
+                normalized_name = normalized_name.replace(
+                    "__",
+                    "_",
+                )
+
+            # Remove underscores from beginning/end
+            normalized_name = normalized_name.strip("_")
+
+            # Handle empty column names
+            if not normalized_name:
+                normalized_name = f"column_{index + 1}"
+
+            # Handle duplicate normalized names
+            base_name = normalized_name
+            counter = 2
+
+            while normalized_name in used_names:
+                normalized_name = (
+                    f"{base_name}_{counter}"
+                )
+                counter += 1
+
+            used_names.add(normalized_name)
+            normalized_columns.append(normalized_name)
+
+            column_report.append(
+                {
+                    "original_name": original_name,
+                    "normalized_name": normalized_name,
+                    "changed": (
+                        original_name
+                        != normalized_name
+                    ),
+                }
+            )
+
+        cleaned_df.columns = normalized_columns
+
+        return cleaned_df, column_report
