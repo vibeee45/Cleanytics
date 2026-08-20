@@ -7,6 +7,10 @@ celery_app = Celery(
     "cleanytics",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
+    include=[
+        "app.workers.cleaning_worker",
+        "app.workers.analytics_worker",
+    ],
 )
 
 celery_app.conf.update(
