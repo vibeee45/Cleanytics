@@ -3,9 +3,13 @@ import time
 from app.workers.celery_app import celery_app
 
 
-@celery_app.task(bind=True)
+@celery_app.task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+)
 def process_dataset(self, dataset_id: int):
-
     self.update_state(
         state="PROGRESS",
         meta={
@@ -40,3 +44,14 @@ def process_dataset(self, dataset_id: int):
         "dataset_id": dataset_id,
         "status": "completed",
     }
+
+
+@celery_app.task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+)
+def test_retry_task(self):
+    print("TEST RETRY TASK EXECUTED")
+    raise Exception("Intentional test failure")
