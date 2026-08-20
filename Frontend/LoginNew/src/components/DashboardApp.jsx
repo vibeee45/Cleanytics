@@ -218,53 +218,97 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
   }, [currentTheme, isDarkMode]); 
 
   // Dashboard Data Fetching Simulation
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const token = window.localStorage.getItem('cleanytics_token');
+      if (!token) return;
+      const resp = await fetch('http://127.0.0.1:8000/api/v1/datasets', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!resp.ok) throw new Error();
+      const datasets = await resp.json();
+      
+      const mapped = datasets.map(d => ({
+        id: d.id,
+        name: d.original_filename,
+        rows: d.row_count.toLocaleString(),
+        cols: d.column_count,
+        date: new Date(d.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        status: d.status === 'uploaded' ? 'Completed' : d.status.charAt(0).toUpperCase() + d.status.slice(1),
+        type: d.file_type
+      }));
+
+      const total = datasets.length;
+      const originalRows = datasets.reduce((sum, d) => sum + d.row_count, 0);
+
+      setDashboardStats({
+        totalDatasets: total,
+        cleanedDatasets: total,
+        qualityScore: total > 0 ? 100 : 0,
+        storageUsed: (originalRows * 0.0001).toFixed(1),
+        originalRows: originalRows,
+        cleanedRows: originalRows,
+        originalColumns: total > 0 ? datasets[0].column_count : 0,
+        cleanedColumns: total > 0 ? datasets[0].column_count : 0
+      });
+      
+      setRecentDatasets(mapped.slice(0, 5));
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setDashboardStats({ totalDatasets: 24, cleanedDatasets: 18, qualityScore: 88, storageUsed: 24.6, originalRows: 125430, cleanedRows: 124876, originalColumns: 18, cleanedColumns: 17 });
-        setRecentDatasets([
-          { id: 1, name: 'sales_data.csv', rows: '12,543', cols: 18, date: 'May 27, 2026 10:30 AM', status: 'Completed', type: 'csv' },
-          { id: 2, name: 'customer_details.xlsx', rows: '8,921', cols: 12, date: 'May 26, 2026 04:15 PM', status: 'Completed', type: 'xlsx' },
-          { id: 3, name: 'employee_data.csv', rows: '5,672', cols: 9, date: 'May 26, 2026 11:20 AM', status: 'Completed', type: 'csv' },
-          { id: 4, name: 'marketing_campaign.csv', rows: '15,230', cols: 25, date: 'May 25, 2026 09:45 AM', status: 'Processing', type: 'csv' },
-          { id: 5, name: 'product_inventory.xlsx', rows: '2,350', cols: 14, date: 'May 24, 2026 02:10 PM', status: 'Failed', type: 'xlsx' },
-        ]);
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchDashboardData();
   }, []);
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
+      const token = window.localStorage.getItem('cleanytics_token');
+      if (!token) return;
+
       const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
-      const newFileEntry = {
-        id: Date.now(),
+      const tempEntry = {
+        id: 'temp-' + Date.now(),
         name: file.name,
-        rows: 'Scanning...', 
+        rows: 'Uploading...', 
         cols: '-',
         date: new Date().toLocaleString(),
         status: 'Processing',
         type: isExcel ? 'xlsx' : 'csv'
       };
       
-      setRecentDatasets((prev) => [newFileEntry, ...prev.slice(0, 4)]);
-      setDashboardStats((prev) => ({
-        ...prev,
-        totalDatasets: prev.totalDatasets + 1
-      }));
-      
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      setRecentDatasets((prev) => [tempEntry, ...prev]);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const resp = await fetch('http://127.0.0.1:8000/api/v1/datasets/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        if (!resp.ok) {
+          const data = await resp.json();
+          throw new Error(data.detail || 'Upload failed');
+        }
+        await fetchDashboardData();
+      } catch (error) {
+        alert(error.message || "Failed to upload file");
+        setRecentDatasets((prev) => prev.filter(item => item.id !== tempEntry.id));
+      } finally {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     }
   };
+
 
   const navItems = [
     { name: 'Home', icon: Home },

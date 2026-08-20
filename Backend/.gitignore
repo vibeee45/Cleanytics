@@ -13,5 +13,9 @@ __pycache__/
 .venv/
 venv/
 
+# Database files
+*.db
+*.sqlite3
+
 # Temporary Code Runner files
-tempCodeRunnerFile.py
+tempCodeRunnerFile.py

@@ -38,3 +38,19 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+# Python / SQLite / Virtual Environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+*.db
+cleanytics_local.db
+backend/cleanytics_local.db
+Backend/cleanytics_local.db
+.env
+.env.example
