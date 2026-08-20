@@ -489,3 +489,122 @@ class CleaningService:
         cleaned_df.columns = normalized_columns
 
         return cleaned_df, column_report
+    @staticmethod
+    def apply_basic_cleaning(
+        df: pd.DataFrame,
+    ) -> tuple[pd.DataFrame, dict]:
+        """
+        Apply basic dataset cleaning rules.
+
+        Rules:
+        - Trim leading/trailing whitespace.
+        - Normalize repeated whitespace.
+        - Convert empty strings to missing values.
+        - Convert common null representations to missing values.
+        - Remove completely empty rows.
+        - Remove completely empty columns.
+
+        Returns:
+            cleaned DataFrame
+            basic-cleaning report
+        """
+
+        cleaned_df = df.copy()
+
+        original_rows = len(cleaned_df)
+        original_columns = len(cleaned_df.columns)
+
+        # Common representations of missing values.
+        null_values = {
+            "",
+            "na",
+            "n/a",
+            "null",
+            "none",
+            "nan",
+            "nil",
+            "unknown",
+        }
+
+        # --------------------------------
+        # Clean string/object columns
+        # --------------------------------
+
+        for column in cleaned_df.columns:
+
+            if (
+                pd.api.types.is_object_dtype(
+                    cleaned_df[column]
+                )
+                or pd.api.types.is_string_dtype(
+                    cleaned_df[column]
+                )
+            ):
+
+                cleaned_df[column] = (
+                    cleaned_df[column]
+                    .astype("string")
+                    .str.strip()
+                    .str.replace(
+                        r"\s+",
+                        " ",
+                        regex=True,
+                    )
+                )
+
+                # Convert common null representations
+                # into actual pandas missing values.
+                cleaned_df[column] = (
+                    cleaned_df[column].mask(
+                        cleaned_df[column]
+                        .str.lower()
+                        .isin(null_values)
+                    )
+                )
+
+        # --------------------------------
+        # Remove completely empty rows
+        # --------------------------------
+
+        empty_rows_removed = int(
+            cleaned_df.isna()
+            .all(axis=1)
+            .sum()
+        )
+
+        cleaned_df = cleaned_df.dropna(
+            how="all"
+        )
+
+        # --------------------------------
+        # Remove completely empty columns
+        # --------------------------------
+
+        empty_columns = cleaned_df.columns[
+            cleaned_df.isna().all()
+        ].tolist()
+
+        empty_columns_removed = len(
+            empty_columns
+        )
+
+        cleaned_df = cleaned_df.dropna(
+            axis=1,
+            how="all",
+        )
+
+        report = {
+            "original_rows": original_rows,
+            "remaining_rows": len(cleaned_df),
+            "empty_rows_removed": empty_rows_removed,
+            "original_columns": original_columns,
+            "remaining_columns": len(
+                cleaned_df.columns
+            ),
+            "empty_columns_removed": (
+                empty_columns_removed
+            ),
+            "removed_columns": empty_columns,
+        }
+
+        return cleaned_df, report
