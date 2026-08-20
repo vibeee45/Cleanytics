@@ -608,3 +608,88 @@ class CleaningService:
         }
 
         return cleaned_df, report
+    @staticmethod
+    def clean_dataset(
+        df: pd.DataFrame,
+    ) -> tuple[pd.DataFrame, dict]:
+        """
+        Run the complete Cleanytics cleaning pipeline.
+
+        Pipeline order:
+        1. Column normalization
+        2. Type inference
+        3. Basic cleaning
+        4. Missing value handling
+        5. Duplicate removal
+
+        Returns:
+            Final cleaned DataFrame
+            Complete cleaning report
+        """
+
+        # Keep original dataset unchanged
+        cleaned_df = df.copy()
+
+        # --------------------------------
+        # 1. Column Normalization
+        # --------------------------------
+
+        cleaned_df, column_report = (
+            CleaningService.normalize_column_names(
+                cleaned_df
+            )
+        )
+
+        # --------------------------------
+        # 2. Type Inference
+        # --------------------------------
+
+        cleaned_df, type_report = (
+            CleaningService.infer_data_types(
+                cleaned_df
+            )
+        )
+
+        # --------------------------------
+        # 3. Basic Cleaning
+        # --------------------------------
+
+        cleaned_df, basic_report = (
+            CleaningService.apply_basic_cleaning(
+                cleaned_df
+            )
+        )
+
+        # --------------------------------
+        # 4. Missing Value Handling
+        # --------------------------------
+
+        cleaned_df, missing_report = (
+            CleaningService.handle_missing_values(
+                cleaned_df
+            )
+        )
+
+        # --------------------------------
+        # 5. Duplicate Removal
+        # --------------------------------
+
+        cleaned_df, duplicate_report = (
+            CleaningService.remove_duplicates(
+                cleaned_df
+            )
+        )
+
+        # --------------------------------
+        # Final Report
+        # --------------------------------
+
+        report = {
+            "column_normalization": column_report,
+            "type_inference": type_report,
+            "basic_cleaning": basic_report,
+            "missing_values": missing_report,
+            "duplicate_removal": duplicate_report,
+        }
+
+        return cleaned_df, report
