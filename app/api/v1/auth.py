@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import rate_limit_auth
 from app.schemas.user import (
     ForgotPasswordRequest,
     MessageResponse,
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
+    dependencies=[Depends(rate_limit_auth)],
 )
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     user = await auth_service.register(db, user_in)
@@ -32,6 +34,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     "/login",
     response_model=TokenResponse,
     summary="Login to obtain access and refresh tokens",
+    dependencies=[Depends(rate_limit_auth)],
 )
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     return await auth_service.login(db, credentials)

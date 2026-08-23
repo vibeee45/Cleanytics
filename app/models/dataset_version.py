@@ -15,7 +15,7 @@ class DatasetVersion(Base):
     __tablename__ = "dataset_versions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    dataset_id: Mapped[str] = mapped_column(String(36), ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
+    dataset_id: Mapped[str] = mapped_column(String(36), ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False, index=True)
     version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     cleaned_file_path: Mapped[str] = mapped_column(String(512), nullable=False)
     quality_score: Mapped[float] = mapped_column(Float, default=0.0)
