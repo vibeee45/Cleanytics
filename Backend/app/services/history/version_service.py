@@ -1,95 +1,52 @@
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
 
-class VersionOperation(str, Enum):
-    """
-    Operations that can create a dataset version.
-    """
-
-    UPLOAD = "upload"
-    CLEANING = "cleaning"
-    TRANSFORMATION = "transformation"
-    UPDATE = "update"
+from app.models.dataset_version import DatasetVersion
+from app.services.history.version_repository import VersionRepository
 
 
 class VersionService:
     """
-    Service responsible for creating dataset version records.
+    Service for dataset version history.
 
-    This layer only creates and validates version metadata.
-    Database persistence will be handled separately.
+    Handles:
+    - validation
+    - version creation
+    - version retrieval
+    - version listing
+    - latest-version lookup
     """
 
     @staticmethod
-    def create_version_record(
-        dataset_id: int,
+    def _validate_dataset_id(
+        dataset_id: str,
+    ) -> str:
+        if not dataset_id:
+            raise ValueError(
+                "dataset_id is required."
+            )
+
+        try:
+            UUID(str(dataset_id))
+        except (ValueError, TypeError) as exc:
+            raise ValueError(
+                "dataset_id must be a valid UUID."
+            ) from exc
+
+        return str(dataset_id)
+
+    @staticmethod
+    def _validate_version_number(
         version_number: int,
-        operation: VersionOperation | str,
-        rows: int,
-        columns: int,
-        created_by: int | None = None,
-        file_reference: str | None = None,
-        version_id: UUID | str | None = None,
-    ) -> dict[str, Any]:
-        """
-        Create a validated dataset version record.
+    ) -> int:
 
-        Args:
-            dataset_id:
-                ID of the dataset this version belongs to.
-
-            version_number:
-                Sequential version number for the dataset.
-
-            operation:
-                Operation that created this version.
-
-            rows:
-                Number of rows in this version.
-
-            columns:
-                Number of columns in this version.
-
-            created_by:
-                ID of the user who created the version.
-
-            file_reference:
-                Reference/path to the stored dataset file.
-
-            version_id:
-                Optional existing version UUID.
-                A new UUID is generated if omitted.
-
-        Returns:
-            A JSON-serializable version record.
-
-        Raises:
-            ValueError:
-                If any supplied value is invalid.
-        """
-
-        # --------------------------------
-        # Validate dataset ID
-        # --------------------------------
-
-        if not isinstance(dataset_id, int):
-            raise ValueError(
-                "dataset_id must be an integer."
-            )
-
-        if dataset_id <= 0:
-            raise ValueError(
-                "dataset_id must be greater than 0."
-            )
-
-        # --------------------------------
-        # Validate version number
-        # --------------------------------
-
-        if not isinstance(version_number, int):
+        if not isinstance(
+            version_number,
+            int,
+        ):
             raise ValueError(
                 "version_number must be an integer."
             )
@@ -99,133 +56,186 @@ class VersionService:
                 "version_number must be greater than 0."
             )
 
-        # --------------------------------
-        # Validate operation
-        # --------------------------------
+        return version_number
 
-        try:
-            operation = VersionOperation(operation)
-        except ValueError as exc:
-            allowed_operations = ", ".join(
-                item.value
-                for item in VersionOperation
+    @staticmethod
+    def _validate_file_path(
+        cleaned_file_path: str,
+    ) -> str:
+
+        if not isinstance(
+            cleaned_file_path,
+            str,
+        ):
+            raise ValueError(
+                "cleaned_file_path must be a string."
             )
 
-            raise ValueError(
-                f"Invalid version operation "
-                f"'{operation}'. "
-                f"Allowed operations: "
-                f"{allowed_operations}."
-            ) from exc
+        cleaned_file_path = (
+            cleaned_file_path.strip()
+        )
 
-        # --------------------------------
-        # Validate row count
-        # --------------------------------
-
-        if not isinstance(rows, int):
+        if not cleaned_file_path:
             raise ValueError(
-                "rows must be an integer."
+                "cleaned_file_path cannot be empty."
             )
 
-        if rows < 0:
+        return cleaned_file_path
+
+    @staticmethod
+    def _validate_quality_score(
+        quality_score: float,
+    ) -> float:
+
+        if not isinstance(
+            quality_score,
+            (int, float),
+        ):
             raise ValueError(
-                "rows cannot be negative."
+                "quality_score must be numeric."
             )
 
-        # --------------------------------
-        # Validate column count
-        # --------------------------------
-
-        if not isinstance(columns, int):
+        if not 0 <= quality_score <= 100:
             raise ValueError(
-                "columns must be an integer."
+                "quality_score must be between 0 and 100."
             )
 
-        if columns < 0:
-            raise ValueError(
-                "columns cannot be negative."
+        return float(quality_score)
+
+    @staticmethod
+    async def create_version(
+        session: AsyncSession,
+        dataset_id: str,
+        version_number: int,
+        cleaned_file_path: str,
+        quality_score: float = 0.0,
+        summary_json: str | None = None,
+    ) -> DatasetVersion:
+        """
+        Create and persist a dataset version.
+        """
+
+        dataset_id = (
+            VersionService._validate_dataset_id(
+                dataset_id
             )
+        )
 
-        # --------------------------------
-        # Validate created_by
-        # --------------------------------
+        version_number = (
+            VersionService._validate_version_number(
+                version_number
+            )
+        )
 
-        if created_by is not None:
+        cleaned_file_path = (
+            VersionService._validate_file_path(
+                cleaned_file_path
+            )
+        )
 
-            if not isinstance(created_by, int):
-                raise ValueError(
-                    "created_by must be an integer "
-                    "or None."
-                )
+        quality_score = (
+            VersionService._validate_quality_score(
+                quality_score
+            )
+        )
 
-            if created_by <= 0:
-                raise ValueError(
-                    "created_by must be greater than 0."
-                )
-
-        # --------------------------------
-        # Normalize file reference
-        # --------------------------------
-
-        if file_reference is not None:
+        if summary_json is not None:
 
             if not isinstance(
-                file_reference,
+                summary_json,
                 str,
             ):
                 raise ValueError(
-                    "file_reference must be a string "
-                    "or None."
+                    "summary_json must be a string or None."
                 )
 
-            file_reference = (
-                file_reference.strip()
-            )
+            summary_json = summary_json.strip()
 
-            if not file_reference:
-                file_reference = None
+            if not summary_json:
+                summary_json = None
 
         # --------------------------------
-        # Version ID
+        # Create ORM object
         # --------------------------------
 
-        if version_id is None:
-
-            generated_version_id = uuid4()
-
-        else:
-
-            try:
-                generated_version_id = UUID(
-                    str(version_id)
-                )
-            except (ValueError, TypeError) as exc:
-                raise ValueError(
-                    "version_id must be a valid UUID."
-                ) from exc
-
-        # --------------------------------
-        # Timestamp
-        # --------------------------------
-
-        created_at = datetime.now(
-            timezone.utc
+        version = DatasetVersion(
+            id=str(uuid4()),
+            dataset_id=dataset_id,
+            version_number=version_number,
+            cleaned_file_path=cleaned_file_path,
+            quality_score=quality_score,
+            summary_json=summary_json,
+            created_at=datetime.now(
+                timezone.utc
+            ),
         )
 
         # --------------------------------
-        # Build record
+        # Persist
         # --------------------------------
 
-        return {
-            "version_id": str(
-                generated_version_id
-            ),
-            "dataset_id": dataset_id,
-            "version_number": version_number,
-            "created_at": created_at.isoformat(),
-            "created_by": created_by,
-            "operation": operation.value,
-            "rows": rows,
-            "columns": columns,
-            "file_reference": file_reference,
-        }
+        return await VersionRepository.create(
+            session,
+            version,
+        )
+
+    @staticmethod
+    async def get_version(
+        session: AsyncSession,
+        version_id: str,
+    ) -> DatasetVersion | None:
+        """
+        Get a specific dataset version.
+        """
+
+        try:
+            UUID(str(version_id))
+        except (ValueError, TypeError) as exc:
+            raise ValueError(
+                "version_id must be a valid UUID."
+            ) from exc
+
+        return await VersionRepository.get_by_id(
+            session,
+            str(version_id),
+        )
+
+    @staticmethod
+    async def list_versions(
+        session: AsyncSession,
+        dataset_id: str,
+    ) -> list[DatasetVersion]:
+        """
+        Get all versions for a dataset.
+        """
+
+        dataset_id = (
+            VersionService._validate_dataset_id(
+                dataset_id
+            )
+        )
+
+        return await VersionRepository.get_all_by_dataset(
+            session,
+            dataset_id,
+        )
+
+    @staticmethod
+    async def get_latest_version(
+        session: AsyncSession,
+        dataset_id: str,
+    ) -> DatasetVersion | None:
+        """
+        Get the latest version of a dataset.
+        """
+
+        dataset_id = (
+            VersionService._validate_dataset_id(
+                dataset_id
+            )
+        )
+
+        return await VersionRepository.get_latest(
+            session,
+            dataset_id,
+        )
