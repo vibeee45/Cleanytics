@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node.js dependencies
 node_modules/
 
@@ -53,4 +54,27 @@ cleanytics_local.db
 backend/cleanytics_local.db
 Backend/cleanytics_local.db
 .env
-.env.example
+.env.example
+=======
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Testing
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Database files
+*.db
+*.sqlite3
+
+# Temporary Code Runner files
+tempCodeRunnerFile.py
+>>>>>>> origin/new-feature-name

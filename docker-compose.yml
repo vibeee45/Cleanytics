@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: cleanytics-postgres
+    environment:
+      POSTGRES_USER: cleanytics
+      POSTGRES_PASSWORD: cleanytics
+      POSTGRES_DB: cleanytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: cleanytics-redis
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: cleanytics-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: cleanytics
+      MINIO_ROOT_PASSWORD: cleanytics-minio-password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  postgres_data:
+  minio_data:
