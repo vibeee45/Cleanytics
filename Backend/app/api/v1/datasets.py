@@ -12,6 +12,8 @@ from app.models.dataset_version import DatasetVersion
 from app.schemas.dataset import DatasetResponse, DatasetDetailResponse
 from app.services.upload_service import upload_service
 
+from app.core.rate_limit import rate_limit_upload
+
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
 
 
@@ -20,6 +22,7 @@ router = APIRouter(prefix="/datasets", tags=["Datasets"])
     response_model=DatasetResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Upload a new dataset (CSV/Excel)",
+    dependencies=[Depends(rate_limit_upload)],
 )
 async def upload_dataset(
     file: UploadFile = File(...),

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,6 +43,17 @@ async def get_current_user(
     return user
 
 
+async def get_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user
+
+
 @router.get(
     "/me",
     response_model=UserResponse,
@@ -64,3 +75,18 @@ async def update_me(
 ):
     updated_user = await auth_service.update_user(db, current_user.id, user_update)
     return updated_user
+
+
+@router.get(
+    "",
+    response_model=List[UserResponse],
+    summary="List all users (Admin only)",
+)
+async def list_users(
+    admin_user: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+    stmt = select(User)
+    result = await db.execute(stmt)
+    return result.scalars().all()
