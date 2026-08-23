@@ -226,6 +226,10 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
       const resp = await fetch('http://127.0.0.1:8000/api/v1/datasets', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (resp.status === 401) {
+        onLogout();
+        return;
+      }
       if (!resp.ok) throw new Error();
       const datasets = await resp.json();
       
@@ -293,6 +297,10 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
+        if (resp.status === 401) {
+          onLogout();
+          return;
+        }
         if (!resp.ok) {
           const data = await resp.json();
           throw new Error(data.detail || 'Upload failed');
