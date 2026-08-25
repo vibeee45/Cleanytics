@@ -245,3 +245,4 @@
 @media (prefers-reduced-motion: reduce) {
   .dashboard-app-root, .dashboard-app-root::before, .dashboard-app-root::after, .jelly-hover:hover, .jelly-button:hover, .history-screen, .history-heading, .history-table, .recommendation-panel::after { animation: none; }
 }
+

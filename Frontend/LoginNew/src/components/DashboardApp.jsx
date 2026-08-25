@@ -60,8 +60,8 @@ const initialHistoryData = [
   { id: 10, name: 'operations_data.xlsx', type: 'XLSX', rows: '11,340', cols: '19', size: '2.21 MB', date: 'May 19, 2026', time: '11:40 AM', status: 'Completed' },
 ];
 
-export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya@example.com', initialThemeId = 'ocean', initialDarkMode = false }) {
-  const [profileName, setProfileName] = useState('Lakshya');
+export default function DashboardApp({ onLogout, onThemeChange, email = 'user@example.com', initialThemeId = 'ocean', initialDarkMode = false }) {
+  const [profileName, setProfileName] = useState('User Name');
   const [profileEmail, setProfileEmail] = useState(email);
   const [activeTab, setActiveTab] = useState('Home'); 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -77,10 +77,12 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
   
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isDatasetPickerOpen, setIsDatasetPickerOpen] = useState(false);
   const [passwordUpdated, setPasswordUpdated] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [topFeedbackLiked, setTopFeedbackLiked] = useState(false);
+  const profileInitial = (profileName.trim().charAt(0) || 'U').toUpperCase();
   
   const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef(null);
@@ -101,12 +103,22 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
   // History Page State
   const [historyData, setHistoryData] = useState(initialHistoryData);
   const [searchQuery, setSearchQuery] = useState('');
+  const [fileTypeFilter, setFileTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
   const [selectedDashboardDataset, setSelectedDashboardDataset] = useState(null);
+  const [previousTab, setPreviousTab] = useState('Home');
 
   const handleViewDashboard = (dataset) => {
     setSelectedDashboardDataset(dataset);
+    setPreviousTab(activeTab);
+    setActiveTab('Dashboard');
+  };
+
+  const openDatasetInDashboard = (dataset) => {
+    setSelectedDashboardDataset(dataset);
+    setIsDatasetPickerOpen(false);
+    setPreviousTab(activeTab);
     setActiveTab('Dashboard');
   };
 
@@ -120,14 +132,23 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.status.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [historyData, searchQuery]);
+    ).filter(item => fileTypeFilter === 'all' || item.type.toUpperCase() === fileTypeFilter.toUpperCase());
+  }, [historyData, searchQuery, fileTypeFilter]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(start, start + itemsPerPage);
   }, [filteredData, currentPage, itemsPerPage]);
+
+  const availableDatasets = useMemo(() => {
+    const seen = new Set();
+    return [...recentDatasets, ...historyData].filter((dataset) => {
+      if (seen.has(dataset.id)) return false;
+      seen.add(dataset.id);
+      return true;
+    });
+  }, [recentDatasets, historyData]);
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this dataset?")) {
@@ -217,7 +238,7 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
     };
   }, [currentTheme, isDarkMode]); 
 
-  // Dashboard Data Fetching Simulation
+  // Real Dashboard Data Fetching
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
@@ -258,6 +279,7 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
       });
       
       setRecentDatasets(mapped.slice(0, 5));
+      setHistoryData(mapped);
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
@@ -316,9 +338,7 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
       }
     }
   };
-
-
-  const navItems = [
+const navItems = [
     { name: 'Home', icon: Home },
     { name: 'Dashboard', icon: LayoutDashboard },
     { name: 'History', icon: Clock },
@@ -404,11 +424,11 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
 
   const renderTab = () => {
     if (activeTab === 'Home') return <Dashboard userName={profileName} dashboardStats={dashboardStats} recentDatasets={recentDatasets} isLoading={isLoading} fileInputRef={fileInputRef} onUpload={handleFileUpload} onNavigate={setActiveTab} />;
-    if (activeTab === 'History') return <History data={paginatedData} searchQuery={searchQuery} setSearchQuery={setSearchQuery} currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage} onDelete={handleDelete} onNavigate={setActiveTab} onViewDashboard={handleViewDashboard} />;
+    if (activeTab === 'History') return <History data={paginatedData} searchQuery={searchQuery} setSearchQuery={setSearchQuery} fileTypeFilter={fileTypeFilter} setFileTypeFilter={setFileTypeFilter} currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage} onDelete={handleDelete} onNavigate={setActiveTab} onViewDashboard={handleViewDashboard} onChooseFromFiles={() => setIsDatasetPickerOpen(true)} />;
     if (activeTab === 'Settings') return <SettingsPanel profileName={profileName} profileEmail={profileEmail} onSaveProfile={(name, nextEmail) => { setProfileName(name); setProfileEmail(nextEmail); }} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} themes={THEMES} currentTheme={currentTheme} setCurrentTheme={(theme) => { setCurrentTheme(theme); onThemeChange?.(theme.id); }} />;
     if (activeTab === 'Help & Support') return <HelpSupport />;
-    if (activeTab === 'Dashboard') return <AnalyticsDashboard dataset={selectedDashboardDataset} onBack={() => setActiveTab('Home')} />;
-    return <Dashboard userName={profileName} dashboardStats={dashboardStats} recentDatasets={recentDatasets} isLoading={isLoading} fileInputRef={fileInputRef} onUpload={handleFileUpload} onNavigate={setActiveTab} />;
+    if (activeTab === 'Dashboard') return <AnalyticsDashboard dataset={selectedDashboardDataset} datasets={availableDatasets} onBack={() => setActiveTab(previousTab)} onSelectDataset={handleViewDashboard} />;
+    return <Dashboard userName={profileName} dashboardStats={dashboardStats} recentDatasets={recentDatasets} isLoading={isLoading} fileInputRef={fileInputRef} onUpload={handleFileUpload} onNavigate={setActiveTab} onChooseFromFiles={() => setIsDatasetPickerOpen(true)} />;
   };
 
   const renderContent = () => {
@@ -423,15 +443,22 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold text-[rgb(var(--text-p))] flex items-center gap-2">
-                Welcome back, {profileName} <span className="animate-wave inline-block origin-bottom-right">👋</span>
+                Welcome back, {profileName}
               </h2>
               <p className="text-sm text-[rgb(var(--text-s))] mt-1">Let AI clean your data and generate powerful insights.</p>
             </div>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 bg-gradient-to-r from-[rgb(var(--success))] to-[var(--c-dark)] text-white font-semibold px-4 py-2.5 rounded-xl text-sm shadow-[0_0_15px_rgba(var(--success),0.3)] hover:shadow-[0_0_25px_rgba(var(--c-main-rgb),0.5)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95 cursor-pointer">
-              <Plus className="w-4 h-4" /> New Project
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button 
+                onClick={() => { setPreviousTab('Home'); setIsDatasetPickerOpen(true); }}
+                className="flex items-center gap-2 bg-[rgba(var(--bg-surface),0.8)] border border-[rgb(var(--border))] text-[rgb(var(--text-p))] font-semibold px-4 py-2.5 rounded-xl text-sm hover:border-[rgba(var(--c-main-rgb),0.45)] hover:text-[var(--c-main)] transition-all duration-300 active:scale-95 cursor-pointer">
+                <FileSpreadsheet className="w-4 h-4" /> Choose from website files
+              </button>
+              <button 
+                onClick={() => setActiveTab('Dashboard')}
+                className="flex items-center gap-2 bg-[rgba(var(--c-main-rgb),0.12)] border border-[rgba(var(--c-main-rgb),0.3)] text-[var(--c-main)] font-semibold px-4 py-2.5 rounded-xl text-sm hover:bg-[rgba(var(--c-main-rgb),0.18)] hover:border-[rgba(var(--c-main-rgb),0.45)] transition-all duration-300 active:scale-95 cursor-pointer">
+                <LayoutDashboard className="w-4 h-4" /> Make me the dashboard
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -803,11 +830,18 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
               </h2>
               <p className="text-sm text-[rgb(var(--text-s))] mt-1 transition-colors">View and manage your previously uploaded and cleaned datasets.</p>
             </div>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 bg-[rgba(var(--c-sec-rgb),0.1)] border border-[rgba(var(--c-sec-rgb),0.2)] hover:border-[rgba(var(--c-sec-rgb),0.5)] hover:bg-[rgba(var(--c-sec-rgb),0.2)] text-[var(--c-sec)] font-semibold px-4 py-2.5 rounded-xl text-sm transition-all duration-300 active:scale-95 cursor-pointer">
-              <UploadCloud className="w-4 h-4" /> Upload New File
-            </button>
+              <div className="flex flex-wrap gap-3">
+                <button 
+                onClick={() => { setPreviousTab('Home'); setIsDatasetPickerOpen(true); }}
+                className="flex items-center gap-2 bg-[rgba(var(--bg-surface),0.8)] border border-[rgb(var(--border))] hover:border-[rgba(var(--c-main-rgb),0.45)] hover:text-[var(--c-main)] text-[rgb(var(--text-p))] font-semibold px-4 py-2.5 rounded-xl text-sm transition-all duration-300 active:scale-95 cursor-pointer">
+                <FileSpreadsheet className="w-4 h-4" /> Choose from website files
+              </button>
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 bg-[rgba(var(--c-sec-rgb),0.1)] border border-[rgba(var(--c-sec-rgb),0.2)] hover:border-[rgba(var(--c-sec-rgb),0.5)] hover:bg-[rgba(var(--c-sec-rgb),0.2)] text-[var(--c-sec)] font-semibold px-4 py-2.5 rounded-xl text-sm transition-all duration-300 active:scale-95 cursor-pointer">
+                  <UploadCloud className="w-4 h-4" /> Upload New File
+                </button>
+              </div>
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -1195,11 +1229,10 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
                 className="flex items-center gap-3 cursor-pointer group hover:bg-[rgb(var(--bg-hover))] px-2 py-1.5 rounded-lg transition-colors"
               >
                 <div className="w-9 h-9 rounded-full bg-[rgba(var(--c-dark-rgb),0.2)] text-[var(--c-main)] flex items-center justify-center font-bold text-sm border border-[rgba(var(--c-dark-rgb),0.3)] group-hover:scale-105 group-hover:border-[rgba(var(--c-main-rgb),0.5)] transition-all duration-300 shadow-[0_0_15px_rgba(var(--c-dark-rgb),0.15)]">
-                  L
+                  {profileInitial}
                 </div>
                 <div className="hidden lg:block">
                   <p className="text-sm font-semibold text-[rgb(var(--text-p))] group-hover:text-[var(--c-main)] transition-colors">{profileName}</p>
-                  <p className="text-[10px] text-[rgb(var(--text-s))] transition-colors">Premium Plan</p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-[rgb(var(--text-s))] group-hover:text-[rgb(var(--text-p))] transition-transform ${isProfileOpen ? 'rotate-180' : 'group-hover:translate-y-0.5'}`} />
               </div>
@@ -1211,9 +1244,6 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
                   </div>
                   <div onClick={() => { setActiveTab('Settings'); setIsProfileOpen(false); }} className="px-4 py-2 hover:bg-[rgb(var(--bg-hover))] transition-all cursor-pointer text-sm text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] flex items-center gap-2">
                     <KeyRound className="w-4 h-4" /> Change Password
-                  </div>
-                  <div onClick={() => setActiveTab('Dashboard')} className="px-4 py-2 hover:bg-[rgb(var(--bg-hover))] transition-all cursor-pointer text-sm text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] flex items-center gap-2">
-                    <Star className="w-4 h-4" /> Billing & Plan
                   </div>
                   <div className="border-t border-[rgb(var(--border))] my-1 transition-colors"></div>
                   <div onClick={onLogout} className="px-4 py-2 hover:bg-rose-500/10 transition-all cursor-pointer text-sm text-rose-500 hover:text-rose-400 flex items-center gap-2">
@@ -1301,6 +1331,43 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'lakshya
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {isDatasetPickerOpen && (
+        <div className="fixed inset-0 bg-[rgba(var(--bg-base),0.82)] backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsDatasetPickerOpen(false)}>
+          <div className="w-full max-w-2xl rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--bg-surface))] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 border-b border-[rgb(var(--border))]">
+              <h3 className="text-lg font-bold text-[rgb(var(--text-p))]">Choose a file from website</h3>
+              <p className="text-xs text-[rgb(var(--text-s))] mt-1">Select any dataset already in the app to open its details.</p>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-4 grid gap-3">
+              {availableDatasets.map((dataset) => (
+                <button
+                  key={dataset.id}
+                  type="button"
+                  onClick={() => openDatasetInDashboard(dataset)}
+                  className="w-full flex items-center justify-between gap-3 p-4 rounded-xl border border-[rgb(var(--border))] bg-[rgba(var(--bg-hover),0.55)] hover:border-[rgba(var(--c-main-rgb),0.45)] hover:bg-[rgba(var(--bg-hover),0.8)] text-left transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[rgba(var(--c-main-rgb),0.12)] text-[var(--c-main)] flex items-center justify-center shrink-0">
+                      <FileSpreadsheet size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[rgb(var(--text-p))] truncate">{dataset.name}</p>
+                      <p className="text-xs text-[rgb(var(--text-s))] mt-0.5">{dataset.type} {dataset.date ? `• ${dataset.date}` : ''}</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${dataset.status === 'Completed' ? 'border-[rgba(var(--success),0.25)] text-[rgb(var(--success))] bg-[rgba(var(--success),0.08)]' : dataset.status === 'Processing' ? 'border-[rgba(var(--c-sec-rgb),0.25)] text-[var(--c-sec)] bg-[rgba(var(--c-sec-rgb),0.08)]' : 'border-rose-500/25 text-rose-500 bg-rose-500/8'}`}>
+                    {dataset.status}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="p-4 border-t border-[rgb(var(--border))] flex justify-end">
+              <button type="button" onClick={() => setIsDatasetPickerOpen(false)} className="px-4 py-2 rounded-xl border border-[rgb(var(--border))] text-sm text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] hover:bg-[rgba(var(--bg-hover),0.6)] transition-colors">Close</button>
+            </div>
           </div>
         </div>
       )}
