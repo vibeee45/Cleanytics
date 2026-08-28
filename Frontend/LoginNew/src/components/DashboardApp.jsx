@@ -122,6 +122,22 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'user@ex
     setActiveTab('Dashboard');
   };
 
+  const handleTriggerDashboard = () => {
+    if (selectedDashboardDataset) {
+      setPreviousTab(activeTab);
+      setActiveTab('Dashboard');
+      return;
+    }
+    
+    const firstCompleted = availableDatasets.find(d => d.status === 'Completed');
+    if (firstCompleted) {
+      handleViewDashboard(firstCompleted);
+    } else {
+      alert("Please upload a CSV/Excel dataset or choose one from website files to generate the dashboard.");
+      setIsDatasetPickerOpen(true);
+    }
+  };
+
   // Canvas Refs
   const canvasRef = useRef(null);
   const mousePos = useRef({ x: 0, y: 0 });
@@ -427,7 +443,7 @@ const navItems = [
     if (activeTab === 'History') return <History data={paginatedData} searchQuery={searchQuery} setSearchQuery={setSearchQuery} fileTypeFilter={fileTypeFilter} setFileTypeFilter={setFileTypeFilter} currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage} onDelete={handleDelete} onNavigate={setActiveTab} onViewDashboard={handleViewDashboard} onChooseFromFiles={() => setIsDatasetPickerOpen(true)} />;
     if (activeTab === 'Settings') return <SettingsPanel profileName={profileName} profileEmail={profileEmail} onSaveProfile={(name, nextEmail) => { setProfileName(name); setProfileEmail(nextEmail); }} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} themes={THEMES} currentTheme={currentTheme} setCurrentTheme={(theme) => { setCurrentTheme(theme); onThemeChange?.(theme.id); }} />;
     if (activeTab === 'Help & Support') return <HelpSupport />;
-    if (activeTab === 'Dashboard') return <AnalyticsDashboard dataset={selectedDashboardDataset} datasets={availableDatasets} onBack={() => setActiveTab(previousTab)} onSelectDataset={handleViewDashboard} />;
+    if (activeTab === 'Dashboard') return <AnalyticsDashboard dataset={selectedDashboardDataset} datasets={availableDatasets} onBack={() => setActiveTab(previousTab)} onSelectDataset={handleViewDashboard} onUpload={handleFileUpload} />;
     return <Dashboard userName={profileName} dashboardStats={dashboardStats} recentDatasets={recentDatasets} isLoading={isLoading} fileInputRef={fileInputRef} onUpload={handleFileUpload} onNavigate={setActiveTab} onChooseFromFiles={() => setIsDatasetPickerOpen(true)} />;
   };
 
@@ -454,7 +470,7 @@ const navItems = [
                 <FileSpreadsheet className="w-4 h-4" /> Choose from website files
               </button>
               <button 
-                onClick={() => setActiveTab('Dashboard')}
+                onClick={() => handleTriggerDashboard()}
                 className="flex items-center gap-2 bg-[rgba(var(--c-main-rgb),0.12)] border border-[rgba(var(--c-main-rgb),0.3)] text-[var(--c-main)] font-semibold px-4 py-2.5 rounded-xl text-sm hover:bg-[rgba(var(--c-main-rgb),0.18)] hover:border-[rgba(var(--c-main-rgb),0.45)] transition-all duration-300 active:scale-95 cursor-pointer">
                 <LayoutDashboard className="w-4 h-4" /> Make me the dashboard
               </button>
@@ -488,7 +504,7 @@ const navItems = [
               </div>
             </div>
 
-            <div className="bg-[rgba(var(--bg-surface),0.9)] backdrop-blur border border-[rgb(var(--border))] rounded-2xl p-5 hover:border-[rgba(var(--c-main-rgb),0.5)] hover:shadow-[0_8px_30px_rgba(var(--c-main-rgb),0.15)] transition-all duration-300 hover:-translate-y-1 group cursor-pointer" onClick={() => setActiveTab('Dashboard')}>
+            <div className="bg-[rgba(var(--bg-surface),0.9)] backdrop-blur border border-[rgb(var(--border))] rounded-2xl p-5 hover:border-[rgba(var(--c-main-rgb),0.5)] hover:shadow-[0_8px_30px_rgba(var(--c-main-rgb),0.15)] transition-all duration-300 hover:-translate-y-1 group cursor-pointer" onClick={() => handleTriggerDashboard()}>
               <div className="flex flex-col h-full justify-between gap-4">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-[rgba(var(--c-main-rgb),0.1)] text-[var(--c-main)] rounded-xl shadow-[0_0_15px_rgba(var(--c-main-rgb),0.15)] group-hover:scale-110 transition-transform duration-300 group-hover:bg-[rgba(var(--c-main-rgb),0.2)]">
@@ -543,13 +559,13 @@ const navItems = [
 
               {isDropdownOpen && (
                 <div className="absolute top-[90%] right-4 w-[220px] bg-[rgb(var(--bg-surface))] border border-[rgb(var(--border))] rounded-xl shadow-2xl py-2 z-20 animate-in fade-in slide-in-from-top-2">
-                  <div onClick={() => setActiveTab('Dashboard')} className="px-3 py-2 hover:bg-[rgb(var(--bg-hover))] hover:pl-5 transition-all cursor-pointer flex items-center gap-3 text-xs text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] group/item">
+                  <div onClick={() => handleTriggerDashboard()} className="px-3 py-2 hover:bg-[rgb(var(--bg-hover))] hover:pl-5 transition-all cursor-pointer flex items-center gap-3 text-xs text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] group/item">
                     <LayoutDashboard className="w-4 h-4 text-[rgb(var(--text-s))] group-hover/item:text-[var(--c-main)] transition-colors" /> Data Overview
                   </div>
-                  <div onClick={() => setActiveTab('Dashboard')} className="px-3 py-2 hover:bg-[rgb(var(--bg-hover))] hover:pl-5 transition-all cursor-pointer flex items-center gap-3 text-xs text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] group/item">
+                  <div onClick={() => handleTriggerDashboard()} className="px-3 py-2 hover:bg-[rgb(var(--bg-hover))] hover:pl-5 transition-all cursor-pointer flex items-center gap-3 text-xs text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] group/item">
                     <Search className="w-4 h-4 text-[rgb(var(--text-s))] group-hover/item:text-[var(--c-main)] transition-colors" /> Missing Value Analysis
                   </div>
-                  <div onClick={() => setActiveTab('Dashboard')} className="px-3 py-2 hover:bg-[rgb(var(--bg-hover))] hover:pl-5 transition-all cursor-pointer flex items-center gap-3 text-xs text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] group/item">
+                  <div onClick={() => handleTriggerDashboard()} className="px-3 py-2 hover:bg-[rgb(var(--bg-hover))] hover:pl-5 transition-all cursor-pointer flex items-center gap-3 text-xs text-[rgb(var(--text-s))] hover:text-[rgb(var(--text-p))] group/item">
                     <Star className="w-4 h-4 text-[rgb(var(--text-s))] group-hover/item:text-[var(--c-main)] transition-colors" /> Data Quality Score
                   </div>
                 </div>
