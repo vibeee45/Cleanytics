@@ -66,3 +66,5 @@ A strong backend choice for this product would be FastAPI or Flask with a databa
 ## Notes for the client
 
 This folder represents the product vision and user experience. It is a strong foundation for a real SaaS platform, but the backend and data processing engine still need to be implemented.
+
+
