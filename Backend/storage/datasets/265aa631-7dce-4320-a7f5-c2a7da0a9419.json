@@ -1,0 +1,12 @@
+[
+  {
+    "Dataset": "employee_data.csv",
+    "Type": "CSV",
+    "Rows": "5,672",
+    "Columns": 9,
+    "Size": "890 KB",
+    "Date": "May 26, 2026",
+    "Time": "11:20 AM",
+    "Status": "Completed"
+  }
+]
