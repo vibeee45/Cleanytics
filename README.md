@@ -1,4 +1,10 @@
+<div align="center">
+
 # Cleanytics
+
+### AI-Powered Data Cleaning & Analytics Platform
+
+</div>
 
 Cleanytics is a product concept for an AI-powered data cleaning and analytics platform. The current repository contains the frontend user experience for a web app that helps users upload messy spreadsheets, review cleaning results, and explore dashboards.
 
@@ -14,32 +20,59 @@ A typical user flow looks like this:
 4. Review results through dashboards, history, and settings.
 5. Download or share the cleaned dataset.
 
+## Version 2 Updates
+
+* Added dashboard triggers
+* Fixed bugs and improved UI
+* Improved dashboard interactions
+* Added `run_project.bat` for easy startup
+* Added localhost access
+* Updated README documentation
+
 ## Current status
 
 This repository is currently a frontend prototype.
 
 It includes:
-- a polished login/signup experience
-- a dashboard-style workspace after login
-- mock datasets and UI states for history, analytics, and settings
-- no real backend or database connection yet
+
+* Login/signup experience
+* Dashboard workspace
+* Dashboard triggers and interactions
+* Mock datasets
+* History, analytics, and settings
+* No real backend or database connection yet
 
 ## Project structure
 
-- [Frontend](Frontend) — main frontend application
-  - [Frontend/LoginNew/src](Frontend/LoginNew/src) — React components and screens
-  - [Frontend/LoginNew/src/App.jsx](Frontend/LoginNew/src/App.jsx) — main app logic and authentication flow
-  - [Frontend/LoginNew/src/components](Frontend/LoginNew/src/components) — UI modules such as dashboard, analytics, history, and settings
-  - [Frontend/LoginNew/src/screens](Frontend/LoginNew/src/screens) — screen entry points
-  - [Frontend/LoginNew/src/styles](Frontend/LoginNew/src/styles) — CSS styling
+* [Frontend](Frontend) — main frontend application
 
-## Tech stack
+  * [Frontend/LoginNew/src](Frontend/LoginNew/src) — React components and screens
+  * [Frontend/LoginNew/src/App.jsx](Frontend/LoginNew/src/App.jsx) — main app logic and authentication flow
+  * [Frontend/LoginNew/src/components](Frontend/LoginNew/src/components) — dashboard, analytics, history, and settings
+  * [Frontend/LoginNew/src/screens](Frontend/LoginNew/src/screens) — screen entry points
+  * [Frontend/LoginNew/src/styles](Frontend/LoginNew/src/styles) — CSS styling
+* `run_project.bat` — starts the project on Windows
 
-- React 19
-- Vite
-- lucide-react
 
 ## How to run locally
+
+### Using `run_project.bat`
+
+Double-click:
+
+```text
+run_project.bat
+```
+
+The project will start and the terminal will show the local Vite URL.
+
+Open the localhost link shown in the terminal, for example:
+
+```text
+http://localhost:5173
+```
+
+### Manual setup
 
 From the project root:
 
@@ -55,16 +88,16 @@ Then open the local Vite URL shown in the terminal.
 
 The next step is to build a backend that will provide:
 
-- user authentication
-- file upload handling
-- data cleaning and validation logic
-- dataset history storage
-- analytics and reporting APIs
+* User authentication
+* File upload handling
+* Data cleaning and validation
+* Dataset history storage
+* Analytics and reporting APIs
 
-A strong backend choice for this product would be FastAPI or Flask with a database such as PostgreSQL or SQLite.
+A strong backend choice for this product would be FastAPI or Flask with PostgreSQL or SQLite.
 
 ## Notes for the client
 
-This folder represents the product vision and user experience. It is a strong foundation for a real SaaS platform, but the backend and data processing engine still need to be implemented.
+Version 2 improves the frontend experience with dashboard triggers, bug fixes, and an easier project startup process.
 
-
+The backend and data processing engine still need to be implemented.
