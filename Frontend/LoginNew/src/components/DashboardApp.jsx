@@ -260,7 +260,7 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'user@ex
     try {
       const token = window.localStorage.getItem('cleanytics_token');
       if (!token) return;
-      const resp = await fetch('http://127.0.0.1:8000/api/v1/datasets', {
+      const resp = await fetch('https://cleanytics-1.onrender.com/api/v1/datasets', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (resp.status === 401) {
@@ -330,7 +330,7 @@ export default function DashboardApp({ onLogout, onThemeChange, email = 'user@ex
       formData.append('file', file);
 
       try {
-        const resp = await fetch('http://127.0.0.1:8000/api/v1/datasets/upload', {
+        const resp = await fetch('https://cleanytics-1.onrender.com/api/v1/datasets/upload', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData

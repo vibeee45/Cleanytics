@@ -38,7 +38,7 @@ export default function AnalyticsDashboard({ dataset, datasets = [], onBack, onS
       try {
         const token = window.localStorage.getItem('cleanytics_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/analytics/datasets/${currentDataset.id}`, { headers });
+        const response = await fetch(`https://cleanytics-1.onrender.com/api/v1/analytics/datasets/${currentDataset.id}`, { headers });
         if (!response.ok) throw new Error("Could not compute analytics for this dataset");
         const json = await response.json();
         if (isMounted) {

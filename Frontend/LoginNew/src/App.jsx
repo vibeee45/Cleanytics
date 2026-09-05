@@ -105,7 +105,7 @@ export default function App() {
   useEffect(() => {
     const token = window.localStorage.getItem('cleanytics_token');
     if (token) {
-      fetch('http://127.0.0.1:8000/api/v1/users/me', {
+      fetch('https://cleanytics-1.onrender.com/api/v1/users/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(r => {
@@ -137,7 +137,7 @@ export default function App() {
   />;
 
   const handleAuthSubmit = async (values) => {
-    const baseUrl = 'http://127.0.0.1:8000/api/v1';
+    const baseUrl = 'https://cleanytics-1.onrender.com/api/v1';
     if (view === 'login') {
       const resp = await fetch(`${baseUrl}/auth/login`, {
         method: 'POST',
